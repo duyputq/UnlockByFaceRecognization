@@ -3,7 +3,9 @@ Nhận diện khuôn mặt sử dụng Haar Cascade
 
 # Thư viện yêu cầu
 pip install opencv-python  
+
 pip install numpy
+
 pip install pillow
 
 # Thứ tự chạy file 
