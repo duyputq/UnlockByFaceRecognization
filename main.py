@@ -21,12 +21,10 @@ def draw_boundary(img, classfier, scaleFactor, minNeighbors, color, text, clf):
         cv2.rectangle(img, (x,y), (x+w, y+h), color, 2)
         id, confidence =clf.predict(gray_img[y:y+h, x:x+w])
         print("Id khuon mat: ",id)
-        if confidence > 70:
+        if confidence > 50:
             cv2.putText(img, "Stranger", (x,y - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 1, cv2.LINE_AA )
         elif id == 2:
-            cv2.putText(img, "Duy", (x,y - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 1, cv2.LINE_AA )
-        elif id == 3:
-            cv2.putText(img, "Girl", (x, y - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 1, cv2.LINE_AA)
+            cv2.putText(img, "Dinh Viet Hieu", (x,y - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 1, cv2.LINE_AA )
         coords = [x,y,w,h]
     return  coords
 

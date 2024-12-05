@@ -46,7 +46,7 @@ def detect(img, faceCascade, img_id):
 
     if len(coords) == 4:
         roi_img = img[coords[1]:coords[1] + coords[3], coords[0]:coords[0] + coords[2]]
-        user_id = 2
+        user_id = 1
         generate_dataset(roi_img, user_id, img_id)
         # coords = draw_boundary(img, eyeCascade, 1.1, 14, color['red'], "Eyes")
         # coords = draw_boundary(img, noseCascade, 1.1, 5, color['green'], "Nose")
@@ -68,7 +68,7 @@ def main():
                 print("collected", img_id, "images")
             _, img = video_capture.read()
             img = detect(img, faceCascade, img_id)
-            cv2.imshow("face detectio", img)
+            cv2.imshow("face detection", img)
             img_id += 1
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

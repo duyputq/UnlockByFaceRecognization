@@ -1,5 +1,5 @@
 #File: classifier.py
-#Desciption: Train anh cho model haar cascade roi xuat ra file cassifier.xml
+#Desciption: Train anh cho model haar cascade roi xuat ra file classifier.xml
 import numpy as np
 from PIL import  Image
 import os, cv2

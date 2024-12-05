@@ -26,9 +26,9 @@ import cv2
 video_capture = cv2.VideoCapture(0)
 
 if not video_capture.isOpened():
-    print("Không thể mở camera")
+    print("Khong the mo camera")
 else:
-    print("Camera đã được mở thành công")
+    print("Camera da duoc mo thanh cong")
     while True:
         ret, frame = video_capture.read()
 
