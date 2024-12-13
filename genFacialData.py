@@ -46,7 +46,7 @@ def detect(img, faceCascade, img_id):
 
     if len(coords) == 4:
         roi_img = img[coords[1]:coords[1] + coords[3], coords[0]:coords[0] + coords[2]]
-        user_id = 2
+        user_id = 3
         generate_dataset(roi_img, user_id, img_id)
         # coords = draw_boundary(img, eyeCascade, 1.1, 14, color['red'], "Eyes")
         # coords = draw_boundary(img, noseCascade, 1.1, 5, color['green'], "Nose")

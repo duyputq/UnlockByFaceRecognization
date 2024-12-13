@@ -3,7 +3,10 @@
 import cv2
 import time
 import numpy as np
+from gpiozero import LED
 
+# Initialize GPIO
+output = LED(14)
 def detect_face_region(image):
     """
     Detect faces in the image and return their coordinates.
@@ -70,37 +73,6 @@ def filter_regions_by_shape(mask, points, max_deviation=5, max_size=5000, min_si
 
     return refined_mask
 
-#
-# def keep_red_on_face(image, face_regions, red_threshold=200, color_diff=50):
-#     """
-#     Retain red points on the face and darken other areas.
-#     """
-#     red_channel = image[:, :, 2]
-#     green_channel = image[:, :, 1]
-#     blue_channel = image[:, :, 0]
-#
-#     # Create a strict red mask
-#     red_mask = (
-#             (red_channel > red_threshold) &
-#             (red_channel > green_channel + color_diff) &
-#             (red_channel > blue_channel + color_diff)
-#     ).astype(np.uint8)
-#
-#     # Create a face mask
-#     face_mask = np.zeros_like(red_mask)
-#     for (x, y, w, h) in face_regions:
-#         face_mask[y:y + h, x:x + w] = 1  # Mark the face region
-#
-#     # Combine masks to retain red points only within the face region
-#     combined_mask = cv2.bitwise_and(red_mask, face_mask)
-#
-#     # Lọc các vùng lớn hoặc quá lệch
-#     refined_mask = filter_regions_by_shape(combined_mask, cv2.findNonZero(combined_mask), max_deviation=5)
-#
-#     # Lấy tọa độ các điểm đỏ
-#     points = cv2.findNonZero(refined_mask)
-#     return refined_mask, points
-
 def keep_red_on_face(image, face_regions, red_threshold=240, color_diff=40, brightness_threshold=200):
     """
     Giữ lại các điểm đỏ trên khuôn mặt và làm đen các vùng khác.
@@ -141,6 +113,8 @@ def fit_trend_line(points):
     Calculate the trend line from points (y = mx + b).
     """
     points = points.squeeze()
+    if points.ndim != 2 or points.shape[1] != 2:
+        raise ValueError("Points should be a 2D array with shape (N, 2).")
     x_coords = points[:, 0]
     y_coords = points[:, 1]
     A = np.vstack([x_coords, np.ones(len(x_coords))]).T
@@ -152,6 +126,8 @@ def calculate_average_deviation(points, m, b):
     """
     Calculate average deviation and variance of points from the trend line.
     """
+    if m == 0 and b == 0:
+        return 0, 0
     points = points.squeeze()
     distances = []
     for x, y in points:
@@ -168,6 +144,7 @@ def process_laser_image(image):
     face_regions = detect_face_region(image)
     if len(face_regions) == 0:
         print("No face detected!")
+        output.off()  # Turn off Pin
         return None, None
 
     # Remove background outside face regions
@@ -178,13 +155,21 @@ def process_laser_image(image):
     if points is None:
         print("No red points detected on the face!")
         return None, None
-
-    # Calculate trend line and deviation
-    m, b = fit_trend_line(points)
-    avg_deviation, variance = calculate_average_deviation(points, m, b)
-
+    try:
+        # Calculate trend line and deviation
+        m, b = fit_trend_line(points)
+        avg_deviation, variance = calculate_average_deviation(points, m, b)
+    except ValueError as e:
+        print("SKIP CONFLICT")
+        print()
+        print()
+        print()
+        print()
+        print()
+        m, b = 0, 0
+        avg_deviation, variance = calculate_average_deviation(points, 0, 0)
     # # Display results
-    result_image = cv2.bitwise_and(image, image, mask=red_mask)
+    #result_image = cv2.bitwise_and(image, image, mask=red_mask)
     # cv2.imshow("Original Image", image)
     # cv2.imshow("Red Points on Face", result_image)
     # cv2.waitKey(0)
@@ -211,10 +196,12 @@ def draw_boundary(img, classfier, scaleFactor, minNeighbors, color, text, clf):
         cv2.rectangle(img, (x,y), (x+w, y+h), color, 2)
         id, confidence =clf.predict(gray_img[y:y+h, x:x+w])
         print("Id khuon mat: ",id)
-        if confidence > 50:
+        if confidence > 80:
             cv2.putText(img, "Stranger", (x,y - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 1, cv2.LINE_AA )
         elif id == 2:
-            cv2.putText(img, "Duy Nguyen", (x,y - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 1, cv2.LINE_AA )
+            cv2.putText(img, "Duy", (x,y - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 1, cv2.LINE_AA )
+        elif id == 3:
+            cv2.putText(img, "DVH", (x, y - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 1, cv2.LINE_AA)
         coords = [x,y,w,h]
     return  coords
 
@@ -261,9 +248,11 @@ def main():
             else:
                 print(f"Average Deviation: {avg_deviation}, Variance: {variance}")
                 if avg_deviation >= 2.0 and variance >= 1:
+                    output.on()  # Turn on Pin
                     print("3D face detected (Real Person)")
                 else:
                     print("2D face detected (Photo)")
+                    output.off()  # Turn off Pin
             time.sleep(0.05)
             cv2.imshow("face detection", img)
             img_id += 1
@@ -271,6 +260,7 @@ def main():
                 break
 
     video_capture.release()
+    output.off()  # Turn off Pin
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
